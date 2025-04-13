@@ -150,6 +150,7 @@ def main(args):
     start_pos = agent.act(env.get_obs())
     obs = env.get_obs()
     joints = obs["joint_positions"]
+    print("poses are ", start_pos, "joints are ", joints)
 
     abs_deltas = np.abs(start_pos - joints)
     id_max_joint_delta = np.argmax(abs_deltas)
@@ -189,7 +190,7 @@ def main(args):
     obs = env.get_obs()
     joints = obs["joint_positions"]
     action = agent.act(obs)
-    if (action - joints > 0.5).any():
+    if (action - joints > 3).any():
         print("Action is too big")
 
         # print which joints are too big

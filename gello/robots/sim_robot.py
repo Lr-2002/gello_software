@@ -226,6 +226,7 @@ class MujocoRobotServer:
                 # a policy and applies a control signal before stepping the physics.
                 self._data.ctrl[:] = self._joint_cmd
                 # self._data.qpos[:] = self._joint_cmd
+                print("the control data is ", self._data.ctrl)
                 mujoco.mj_step(self._model, self._data)
                 self._joint_state = self._data.qpos.copy()[: self._num_joints]
 
