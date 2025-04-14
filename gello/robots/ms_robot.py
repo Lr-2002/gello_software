@@ -1,4 +1,5 @@
 import pickle
+import os
 import cv2
 
 import threading
@@ -18,6 +19,7 @@ import gymnasium as gym
 from gello.robots.robot import Robot
 
 from mani_skill.utils.wrappers.record import RecordEpisode
+from mani_skill.utils.video_writer import VideoWriter
 
 assert mujoco.viewer is mujoco.viewer
 
@@ -115,7 +117,7 @@ class MSRobotServer:
             robot_uids="panda_wristcam",
             render_mode="human",
         )
-        output_dir = "teleoperation_dataset"
+        output_dir = f"teleoperation_dataset/{env_name}/"
         import datetime
 
         self.save_video = False
@@ -128,14 +130,19 @@ class MSRobotServer:
             trajectory_name=trajectory_name,
             save_video=self.save_video,
             info_on_video=False,
-            source_type="ar_teleoperation",
-            source_desc="teleoperation via MujocoARConnector",
+            source_type="gello_teleoperation",
+            source_desc="teleoperation via gello",
         )
+        self.trajectory_name = trajectory_name
+        self.traj_path = os.path.join(output_dir, trajectory_name)
         obs, info = self.env.reset()
         self.obs = obs
         self._num_joints = 8
+        obs_dict = self.get_observations()
 
-        self._joint_state = np.zeros(self._num_joints)
+        # self._joint_state = np.zeros(self._num_joints)
+        self._joint_state = obs_dict["joint_positions"]
+
         self._joint_cmd = self._joint_state
 
         self._zmq_server = ZMQRobotServer(robot=self, host=host, port=port)
@@ -204,19 +211,22 @@ class MSRobotServer:
 
     def serve(self) -> None:
         # start the zmq server
+
         self._zmq_server_thread.start()
 
         # with mujoco.viewer.launch_passive(self._model, self._data) as viewer:
         #
         done = False
-
+        init_image, title = display_camera_views(self.obs)
+        self.video_writer = VideoWriter(init_image, self.traj_path + ".mp4")
         while not done:
             step_start = time.time()
-
+            print("step_time", step_start)
             # mj_step can be replaced with code that also evaluates
             # a policy and applies a control signal before stepping the physics.
             action = self._joint_cmd
             action = np.array(action.tolist() + [0])
+            print(action)
             # self._data.qpos[:] = self._joint_cmd
             # print("the control data is ", action)
             # mujoco.mj_step(self._model, self._data)
@@ -240,6 +250,8 @@ class MSRobotServer:
             # viewer.sync()
             # display_camera_views()
             initial_img, title = display_camera_views(obs)
+            self.video_writer.write(initial_img)
+
             cv2.waitKey(1)
             cv2.moveWindow(title, 500, 400)
 
@@ -249,8 +261,11 @@ class MSRobotServer:
             # time_until_next_step = self._model.opt.timestep - (time.time() - step_start)
             # if time_until_next_step > 0:
             #     time.sleep(time_until_next_step)
+        self.env.close()
+        self.video_writer.close()
 
     def stop(self) -> None:
+        # self.env.close()
         self._zmq_server_thread.join()
 
     def __del__(self) -> None:
