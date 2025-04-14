@@ -124,15 +124,15 @@ class MSRobotServer:
 
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         trajectory_name = f"trajectory_{timestamp}"
-        self.env = RecordEpisode(
-            self.env,
-            output_dir=output_dir,
-            trajectory_name=trajectory_name,
-            save_video=self.save_video,
-            info_on_video=False,
-            source_type="gello_teleoperation",
-            source_desc="teleoperation via gello",
-        )
+        # self.env = RecordEpisode(
+        #     self.env,
+        #     output_dir=output_dir,
+        #     trajectory_name=trajectory_name,
+        #     save_video=self.save_video,
+        #     info_on_video=False,
+        #     source_type="gello_teleoperation",
+        #     source_desc="teleoperation via gello",
+        # )
         self.trajectory_name = trajectory_name
         self.traj_path = os.path.join(output_dir, trajectory_name)
         obs, info = self.env.reset()

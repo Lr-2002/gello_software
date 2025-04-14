@@ -20,8 +20,11 @@ def launch_robot_server(args: Args):
     port = args.robot_port
     from gello.robots.ms_robot import MSRobotServer
 
-    env_name = "Tabletop-Clean-For-Dinner-v1"
-    # env_name = "Tabletop-Pick-Apple-v1"
+    # env_name = "Tabletop-Clean-For-Dinner-v1"
+    # env_name = "Tabletop-Find-Book-From-Shelf-v1"
+    env_name = "Tabletop-v2"
+    env_name = "Tabletop-Pick-Cube-WithStick-v1"
+    env_name = "Tabletop-Open-Cabinet-v1"
     server = MSRobotServer(env_name=env_name, port=port, host=args.hostname)
     # for x in range(10):
     server.serve()
