@@ -15,10 +15,10 @@ class Args:
     port: str = "/dev/ttyUSB0"
     """The port that GELLO is connected to."""
 
-    start_joints: Tuple[float, ...] = (0, 0, 0, 0, 0, 0)
+    start_joints: Tuple[float, ...] = (0, 0.3925, 0, -1.9625, 0, 2.355, 0.0)
     """The joint angles that the GELLO is placed in at (in radians)."""
+    joint_signs: Tuple[float, ...] = (1, 1, 1, 1, 1, -1, 1)
 
-    joint_signs: Tuple[float, ...] = (1, 1, -1, 1, 1, 1)
     """The joint angles that the GELLO is placed in at (in radians)."""
 
     gripper: bool = True
@@ -88,6 +88,8 @@ def get_config(args: Args) -> None:
                 "gripper close (degrees)      ",
                 np.rad2deg(driver.get_joints()[-1]) - 42,
             )
+
+    np.save("gello_offset.npy", np.array(best_offsets))
 
 
 def main(args: Args) -> None:

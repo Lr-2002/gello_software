@@ -1,7 +1,9 @@
 import os
+import glob
 from dataclasses import dataclass
 from typing import Dict, Optional, Sequence, Tuple
 
+from cv2 import GC_EVAL
 import numpy as np
 
 from gello.agents.agent import Agent
@@ -43,6 +45,8 @@ class DynamixelRobotConfig:
         )
 
 
+panda_offset = np.load("./gello_offset.npy")[:-1]
+print([*panda_offset, 3.9])
 PORT_CONFIG_MAP: Dict[str, DynamixelRobotConfig] = {
     # xArm
     # "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT3M9NVB-if00-port0": DynamixelRobotConfig(
@@ -53,7 +57,7 @@ PORT_CONFIG_MAP: Dict[str, DynamixelRobotConfig] = {
     #         2 * np.pi / 2,
     #         2 * np.pi / 2,
     #         -1 * np.pi / 2 + 2 * np.pi,
-    #         1 * np.pi / 2,
+    #         1 * np.pi / 2,0a0
     #         1 * np.pi / 2,
     #     ),
     #     joint_signs=(1, 1, 1, 1, 1, 1, 1),
@@ -63,7 +67,7 @@ PORT_CONFIG_MAP: Dict[str, DynamixelRobotConfig] = {
     # "/dev/cu.usbserial-FT3M9NVB": DynamixelRobotConfig(
     "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA7NP9G-if00-port0": DynamixelRobotConfig(
         joint_ids=(0, 1, 2, 3, 4, 5, 6),
-        joint_offsets=[6.283, 3.142, 7.854, 4.712, 6.283, 1.571, 3.9],
+        joint_offsets=[*panda_offset, 3.9],
         joint_signs=(1, 1, 1, 1, 1, -1, 1),
         gripper_config=(7, 107, 65),
     ),
@@ -119,8 +123,9 @@ class GelloAgent(Agent):
             config = PORT_CONFIG_MAP[port]
             self._robot = config.make_robot(port=port, start_joints=start_joints)
 
-    def act(self, obs: Dict[str, np.ndarray]) -> np.ndarray:
-        return self._robot.get_joint_state()
+    def act(self, obs: Dict[str, np.ndarray] = None) -> np.ndarray:
+        act = self._robot.get_joint_state()
+        return act
         dyna_joints = self._robot.get_joint_state()
         # current_q = dyna_joints[:-1]  # last one dim is the gripper
         current_gripper = dyna_joints[-1]  # last one dim is the gripper
@@ -132,3 +137,22 @@ class GelloAgent(Agent):
         else:
             self._robot.set_torque_mode(False)
             return dyna_joints
+
+
+if __name__ == "__main__":
+    # agent = GelloAgent()
+    gello_port = None
+    start_joints = None
+    if gello_port is None:
+        usb_ports = glob.glob("/dev/serial/by-id/*")
+        print(f"Found {len(usb_ports)} ports")
+        if len(usb_ports) > 0:
+            gello_port = usb_ports[0]
+            print(f"using port {gello_port}")
+        else:
+            raise ValueError("No gello port found, please specify one or plug in gello")
+
+    agent = GelloAgent(port=gello_port, start_joints=start_joints)
+    while True:
+        joint = agent.act()
+        print(joint)
