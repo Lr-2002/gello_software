@@ -94,7 +94,7 @@ class MSRobotServer:
         env_name="Tabletop-Pick-Apple-v1",
         host: str = "127.0.0.1",
         port: int = 5556,
-        use_delta=True,
+        use_delta=False,
         # print_joints: bool = True,
     ):
         # self._has_gripper = gripper_xml_path is not None
